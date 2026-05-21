@@ -46,13 +46,29 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (result.containsKey('token')) {
+        // FIX: extract the token from the response and pass it to setUser,
+        // so AuthProvider saves it to SharedPreferences for future API calls.
+        final token = result['token'] as String?;
+
         final rawUser = result['user'];
         if (rawUser is Map<String, dynamic>) {
           await Provider.of<AuthProvider>(
             context,
             listen: false,
-          ).setUser(User.fromJson(rawUser));
+          ).setUser(User.fromJson(rawUser), token: token);
+        } else {
+          // Edge case: backend returned token but no user object.
+          // Fetch /me to hydrate the user.
+          final meData = await ApiService.getMe();
+          if (!mounted) return;
+          if (meData != null) {
+            await Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            ).setUser(User.fromJson(meData), token: token);
+          }
         }
+
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       } else {
@@ -126,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _passwordController,
                 obscureText: _obscure,
+                onSubmitted: (_) => _login(),
                 decoration: InputDecoration(
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock_outline),

@@ -80,19 +80,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (result.containsKey('token')) {
+        // FIX: extract and pass the token so it gets persisted.
+        final token = result['token'] as String?;
         final rawUser = result['user'];
         if (rawUser is Map<String, dynamic>) {
           await Provider.of<AuthProvider>(
             context,
             listen: false,
-          ).setUser(User.fromJson(rawUser));
+          ).setUser(User.fromJson(rawUser), token: token);
         }
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       } else {
+        // FIX: original used hard cast "as String" which crashes when null.
         final msg =
-            result['error'] as String ??
-            result['message'] as String ??
+            result['error'] as String? ??
+            result['message'] as String? ??
             'Registration failed.';
         setState(() => _errorMsg = msg);
       }
@@ -129,7 +132,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: TextStyle(color: AppColors.textGrey),
               ),
               const SizedBox(height: 24),
-              // Type selector
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -153,7 +155,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Fields
               _buildField('Full Name', _nameCtrl, Icons.person_outline),
               const SizedBox(height: 14),
               _buildField(

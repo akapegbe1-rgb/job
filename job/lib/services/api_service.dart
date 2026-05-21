@@ -20,7 +20,7 @@ class ApiService {
 
     // FOR PHYSICAL DEVICE - USE YOUR COMPUTER'S IP
     // Your backend shows: http://192.168.1.191:3000
-    return 'http://172.20.10.3:3000'; // ← UPDATE THIS IP
+    return 'http://172.20.10.3:3000'; // ← your current hotspot/network IP
   }
 
   static Future<String?> getToken() async {

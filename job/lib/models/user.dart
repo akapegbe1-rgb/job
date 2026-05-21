@@ -4,7 +4,7 @@ class User {
   final String name;
   final String email;
   final String type;
-  final String? company;
+  final String? company; // intern: unused | company: their company name
   final List<String>? skills;
   final String? cvPath;
   final double? gpa;
@@ -13,8 +13,8 @@ class User {
   final List<String>? documents;
   final String? photoUrl;
   final String? major;
-  final String? industry; // ADDED for company
-  final String? location; // ADDED for company
+  final String? industry;
+  final String? location;
 
   const User({
     required this.id,
@@ -42,17 +42,24 @@ class User {
   );
 
   bool get isGuest => id == 'guest';
+
+  // Backend sends type == "intern" for interns and "company" for companies.
   bool get isIntern =>
-      type == 'intern' || type == 'jobseeker' || type == 'student';
+      type == 'intern' || type == 'student' || type == 'jobseeker';
   bool get isCompany => type == 'company' || type == 'employer';
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // FIX: backend sends "companyName" for Company users, not "company".
+    // Accept either key so this works for both old and new responses.
+    final companyValue =
+        (json['companyName'] as String?) ?? (json['company'] as String?);
+
     return User(
       id: (json['id'] as String?) ?? 'guest',
       name: (json['name'] as String?) ?? 'User',
       email: (json['email'] as String?) ?? '',
       type: (json['type'] as String?) ?? 'intern',
-      company: json['company'] as String?,
+      company: companyValue,
       skills: (json['skills'] as List?)?.map((e) => e.toString()).toList(),
       cvPath: json['cvPath'] as String?,
       gpa: (json['gpa'] as num?)?.toDouble(),
@@ -63,8 +70,8 @@ class User {
           .toList(),
       photoUrl: json['photoUrl'] as String?,
       major: json['major'] as String?,
-      industry: json['industry'] as String?, // ADDED
-      location: json['location'] as String?, // ADDED
+      industry: json['industry'] as String?,
+      location: json['location'] as String?,
     );
   }
 
@@ -73,7 +80,9 @@ class User {
     'name': name,
     'email': email,
     'type': type,
+    // FIX: persist both keys so fromJson can round-trip correctly.
     'company': company,
+    'companyName': company,
     'skills': skills,
     'cvPath': cvPath,
     'gpa': gpa,
@@ -82,8 +91,8 @@ class User {
     'documents': documents,
     'photoUrl': photoUrl,
     'major': major,
-    'industry': industry, // ADDED
-    'location': location, // ADDED
+    'industry': industry,
+    'location': location,
   };
 
   User copyWith({
